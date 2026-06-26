@@ -1,0 +1,37 @@
+{
+  "name": "@wowori/pomo",
+  "version": "0.1.0",
+  "description": "A cross-platform Pomodoro timer CLI. No dependencies, just Node.js.",
+  "type": "module",
+  "bin": {
+    "pomo": "bin/pomo.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/",
+    "start": "node bin/pomo.mjs"
+  },
+  "keywords": [
+    "pomodoro",
+    "timer",
+    "cli",
+    "productivity"
+  ],
+  "license": "MIT",
+  "author": "wowori",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wowori/pomo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wowori/pomo/issues"
+  }
+}
