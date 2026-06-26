@@ -1,7 +1,7 @@
 {
-  "name": "@wowori/pomo",
+  "name": "pomotracker",
   "version": "0.1.0",
-  "description": "A cross-platform Pomodoro timer CLI. No dependencies, just Node.js.",
+  "description": "Cross-platform Pomodoro timer CLI. No dependencies, just Node.js.",
   "type": "module",
   "bin": {
     "pomo": "bin/pomo.mjs"

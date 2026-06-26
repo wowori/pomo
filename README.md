@@ -1,118 +1,118 @@
-# @wowori/pomo
+# pomotracker
 
-[![npm](https://img.shields.io/npm/v/@wowori/pomo)](https://www.npmjs.com/package/@wowori/pomo)
-[![node](https://img.shields.io/node/v/@wowori/pomo)](https://nodejs.org)
-[![license](https://img.shields.io/npm/l/@wowori/pomo)](./LICENSE)
-[![no deps](https://img.shields.io/badge/dependencies-zero-blue)]()
+Cross-platform Pomodoro timer CLI. Zero dependencies, Node.js >= 18.
 
-A cross-platform Pomodoro timer CLI. **Zero dependencies** — just Node.js ≥18.
-
-- Foreground-free: `pomo start` returns immediately, the session runs detached.
-- Beep + desktop notification when time's up.
-- Local session log + daily/weekly/monthly stats + streak.
-- Shell completions for bash, zsh, fish.
-- Windows, macOS, Linux.
+`pomo start` returns immediately. The session runs in a detached worker.
+When time is up you get a beep and a desktop notification. Sessions are
+logged to `~/.pomo/sessions.jsonl`.
 
 ## Install
 
-```bash
-npm install -g @wowori/pomo
+```
+npm install -g pomotracker
 ```
 
-Or run without installing:
+Or without installing:
 
-```bash
-npx @wowori/pomo start 25
+```
+npx pomotracker start 25
 ```
 
-## Quick start
+## Usage
 
-```bash
-pomo start                    # focus, 25 min (default)
+```
+pomo start [duration] [--label "..."] [--force]
+pomo break [duration] [--label "..."] [--force]
+pomo stop
+pomo status [--json]
+pomo stats [day|week|month|all] [--json]
+pomo log [--limit N] [--today] [--type focus|break] [--json]
+pomo config get|set|list|reset [key] [value]
+pomo completions <bash|zsh|fish>
+pomo --version
+pomo --help
+```
+
+### Duration
+
+A bare number is minutes. With a suffix: `90s`, `25m`, `1h`, `1h30m`.
+Maximum: 24h. To pass a value that starts with a dash, put `--` first:
+
+```
+pomo start -- -5m
+```
+
+### Examples
+
+```
+pomo start                          # focus, default 25m
 pomo start 1h30m --label "deep work"
 pomo break 10
-pomo stop                     # cancel the active session
-pomo status                   # what's running + time left
-pomo stats                    # today
+pomo status                         # 00:24 left (of 01:30) — deep work
 pomo stats week
-pomo log -n 5                 # last 5 sessions
+pomo log -n 5
 pomo config set focusMinutes 50
 pomo completions bash > ~/.pomo-completion.bash
 ```
 
-## Commands
+## Config
 
-| Command | What it does |
-| --- | --- |
-| `pomo start [duration] [--label "..."] [--auto-break] [--force]` | Start a focus session. |
-| `pomo break [duration] [--label "..."] [--force]` | Start a break. |
-| `pomo stop` | Cancel the active session (logged as stopped). |
-| `pomo status [--json]` | Show active session + remaining time. |
-| `pomo stats [day\|week\|month\|all] [--json]` | Aggregate stats for the period. |
-| `pomo log [--limit N] [--today] [--type focus\|break] [--json]` | List sessions. |
-| `pomo config get\|set\|list\|reset [key] [value]` | Manage config. |
-| `pomo completions <bash\|zsh\|fish>` | Print a completion script. |
-| `pomo --version` | Print version. |
-| `pomo --help` | Show usage. |
+`~/.pomo/config.json`. Defaults:
 
-### Duration syntax
+| Key              | Default | Notes                                   |
+| ---------------- | ------- | --------------------------------------- |
+| focusMinutes     | 25      | default focus length                    |
+| breakMinutes     | 5       | default break length                    |
+| longBreakMinutes | 15      | reserved (long breaks: not implemented) |
+| longBreakEvery   | 4       | reserved                                |
+| autoBreak        | false   | reserved (auto-start break: not impl.)  |
+| notify           | true    | desktop notification on completion      |
+| beep             | true    | console beep on completion              |
+| label            | ""      | default label applied to new sessions   |
 
-- Bare number → minutes: `25` = 25 min
-- With suffix: `90s`, `25m`, `1h`, `1h30m`, `1h30m15s`
-- Omitted → uses the value from `config focusMinutes` (or `breakMinutes` for `pomo break`)
+`pomo config set <key> <value>` validates the value (positive number for
+duration keys, `true`/`false` for booleans) and writes it back.
 
-## Configuration
+## Data files
 
-Config lives in `~/.pomo/config.json`. Defaults:
-
-| Key | Default | Meaning |
-| --- | --- | --- |
-| `focusMinutes` | `25` | Default focus length. |
-| `breakMinutes` | `5` | Default break length. |
-| `longBreakMinutes` | `15` | (Reserved for future use.) |
-| `longBreakEvery` | `4` | (Reserved for future use.) |
-| `autoBreak` | `false` | (Reserved for future use.) |
-| `notify` | `true` | Send a desktop notification on completion. |
-| `beep` | `true` | Audible beep on completion. |
-| `label` | `""` | Default label applied to new sessions. |
-
-```bash
-pomo config set focusMinutes 50
-pomo config set notify false
-pomo config get focusMinutes
-pomo config list
-pomo config reset
-```
-
-## Where data lives
-
-| File | Purpose |
-| --- | --- |
-| `~/.pomo/config.json` | Configuration. |
-| `~/.pomo/active.json` | The currently active session (deleted on completion). |
-| `~/.pomo/sessions.jsonl` | One JSON record per completed/stopped session. |
+| File                          | Purpose                                |
+| ----------------------------- | -------------------------------------- |
+| `~/.pomo/config.json`         | config                                 |
+| `~/.pomo/active.json`         | current session (deleted on finish)    |
+| `~/.pomo/sessions.jsonl`      | one JSON record per session            |
 
 ## Notifications
 
-- **Windows:** beep via PowerShell `[Console]::Beep`. Notification via BurntToast if installed; otherwise a balloon-tip fallback. To enable rich toasts: `Install-Module -Scope CurrentUser BurntToast` (one-time, in an elevated PowerShell).
-- **macOS:** beep via terminal bell; notification via `osascript`.
-- **Linux:** beep via terminal bell; notification via `notify-send` (libnotify).
+| OS      | Beep                         | Notification                                             |
+| ------- | ---------------------------- | -------------------------------------------------------- |
+| Windows | PowerShell `[Console]::Beep` | BurntToast if installed, else balloon-tip fallback       |
+| macOS   | terminal bell                | `osascript display notification`                         |
+| Linux   | terminal bell                | `notify-send` (libnotify)                                |
 
-## How it runs in the background
+On Windows, to get rich toasts: `Install-Module -Scope CurrentUser BurntToast`
+in an elevated PowerShell (one-time).
 
-`pomo start` writes the session to `~/.pomo/active.json`, spawns a detached worker (`bin/pomo-worker.mjs`) and exits. The worker sleeps until the deadline, then writes the session to `sessions.jsonl`, removes `active.json`, and fires beep+notification. Any subsequent `pomo` command reconciles `active.json` — if the worker died unexpectedly before the deadline, the session is logged as `stopped`; if past the deadline, as `done`.
+## Background worker
 
-`pomo stop` removes `active.json` and kills the worker.
+`pomo start` writes `active.json`, spawns `bin/pomo-worker.mjs` detached, and
+exits. The worker sleeps until the deadline, writes the session record, deletes
+`active.json`, and fires the beep + notification.
+
+Any subsequent `pomo` command reconciles `active.json`. If the worker is gone
+and the deadline has passed, the session is logged as completed. If the worker
+is gone but the deadline is still in the future, the session is logged as
+stopped. This handles system reboots, kills, and `pomo stop`.
+
+`pomo stop` deletes `active.json` and kills the worker.
 
 ## Development
 
-```bash
+```
 git clone https://github.com/wowori/pomo
 cd pomo
-npm test           # node --test test/
-npm start -- start 5s
+npm test
 ```
 
 ## License
 
-[MIT](./LICENSE)
+MIT
