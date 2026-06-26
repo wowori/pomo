@@ -27,7 +27,8 @@ test('fmtClock: pads MM:SS', () => {
   assert.equal(fmtClock(59), '00:59');
   assert.equal(fmtClock(60), '01:00');
   assert.equal(fmtClock(25 * 60), '25:00');
-  assert.equal(fmtClock(60 * 60 + 5), '60:05');
+  assert.equal(fmtClock(60 * 60 + 5), '1h00:05');
+  assert.equal(fmtClock(24 * 60 * 60), '24h00:00');
 });
 
 test('parseDuration: bare number is minutes', () => {
@@ -50,6 +51,15 @@ test('parseDuration: rejects garbage', () => {
   assert.throws(() => parseDuration('-5m'));
   assert.throws(() => parseDuration(0));
   assert.throws(() => parseDuration(-1));
+});
+
+test('parseDuration: caps at 24h', () => {
+  assert.throws(() => parseDuration('25h'));
+  assert.throws(() => parseDuration('24h1m'));
+  assert.throws(() => parseDuration(1500), /24h/); // 1500 minutes = 25h
+  // boundary: exactly 24h is allowed
+  assert.equal(parseDuration('24h'), 24 * 60 * 60);
+  assert.equal(parseDuration('1440'), 24 * 60 * 60); // 1440 minutes
 });
 
 test('startOfDay: zeroes time portion', () => {

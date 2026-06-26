@@ -26,27 +26,40 @@ export function fmtDuration(seconds) {
   return s > 0 ? `${m}m ${s}s` : `${m}m`;
 }
 
-// MM:SS countdown form, padded.
+// MM:SS countdown form, padded. For >= 1h, switches to "HhMM:SS" so the
+// minutes field doesn't overflow its two digits.
 export function fmtClock(seconds) {
   seconds = Math.max(0, Math.round(seconds));
-  const m = Math.floor(seconds / 60);
+  const totalMin = Math.floor(seconds / 60);
   const s = seconds % 60;
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  if (totalMin >= 60) {
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return `${h}h${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+  return `${String(totalMin).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
 // Parse "25", "25m", "1h30m", "90s" -> seconds. Throws on garbage.
-// Both string and number inputs: bare number = minutes, "25" = 25 minutes, "25m" = 25 minutes.
+// Both string and number inputs: bare number = minutes, "25" = 25 minutes.
+// Capped at MAX_DURATION_SEC (24h) — anything longer is almost certainly a typo.
+export const MAX_DURATION_SEC = 24 * 60 * 60;
+
 export function parseDuration(input) {
   if (typeof input === 'number') {
     if (!Number.isFinite(input) || input <= 0) throw new Error('duration must be positive');
-    return Math.round(input) * 60;
+    const out = Math.round(input) * 60;
+    if (out > MAX_DURATION_SEC) throw new Error(`duration must be at most 24h (got ${Math.round(input)}m)`);
+    return out;
   }
   const s = String(input).trim();
   if (s === '') throw new Error('duration is required');
   if (/^\d+$/.test(s)) {
     const n = parseInt(s, 10);
     if (n <= 0) throw new Error('duration must be positive');
-    return n * 60; // bare number => minutes
+    const out = n * 60;
+    if (out > MAX_DURATION_SEC) throw new Error(`duration must be at most 24h (got ${n}m)`);
+    return out;
   }
   const m = s.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/i);
   if (!m || (!m[1] && !m[2] && !m[3])) throw new Error(`invalid duration: ${input}`);
@@ -54,7 +67,9 @@ export function parseDuration(input) {
   const mm = parseInt(m[2] || '0', 10);
   const ss = parseInt(m[3] || '0', 10);
   if (h === 0 && mm === 0 && ss === 0) throw new Error('duration must be positive');
-  return h * 3600 + mm * 60 + ss;
+  const out = h * 3600 + mm * 60 + ss;
+  if (out > MAX_DURATION_SEC) throw new Error(`duration must be at most 24h (got ${input})`);
+  return out;
 }
 
 // Start-of-day in local time, as ISO string.

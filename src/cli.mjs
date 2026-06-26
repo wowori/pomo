@@ -53,7 +53,7 @@ function parseFlags(argv) {
 const HELP = `${c.bold('pomo')} — cross-platform Pomodoro timer (no dependencies)
 
 ${c.bold('Usage:')}
-  pomo start [duration] [--label "..."] [--auto-break] [--force]
+  pomo start [duration] [--label "..."] [--force]
   pomo break [duration] [--label "..."] [--force]
   pomo stop
   pomo status [--json]
@@ -68,6 +68,7 @@ ${c.bold('Usage:')}
 
 ${c.bold('Duration:')}
   Bare number = minutes (25). With suffix: 90s, 25m, 1h30m.
+  Maximum: 24h. Pass 'pomo start -- -5m' if your duration starts with a dash.
 
 ${c.bold('Examples:')}
   pomo start                          # focus, default 25m
@@ -214,7 +215,6 @@ export async function run(argv) {
       const rec = start({
         minutes,
         label,
-        autoBreak: !!flags['auto-break'],
         force: !!flags.force,
       });
       console.log(`${c.cyan('Focus')} session started: ${fmtClock(rec.durationSec)}${rec.label ? ` — ${rec.label}` : ''}`);
